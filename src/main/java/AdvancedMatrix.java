@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 public class AdvancedMatrix {
     private final ArrayList<ArrayList<Double>> matrix;
-    private ArrayList<ArrayList<Double>> AdjugateMatrix = null;
+    private ArrayList<ArrayList<Double>> adjugateMatrix = null;
     private final ArrayList<Double> freeTerms;
     private ArrayList<Double> variables;
     private Double determinant = null;
@@ -15,27 +15,8 @@ public class AdvancedMatrix {
             throw new InvalidParameterException("Matrix size don't equals freeTerms size");
         this.matrix = matrix;
         this.freeTerms = freeTerms;
-    }
-
-    public ArrayList<ArrayList<Double>> getMatrix() {
-        return matrix;
-    }
-
-    public ArrayList<Double> getFreeTerms() {
-        return freeTerms;
-    }
-
-    public ArrayList<Double> getVariables() {
-        return variables;
-    }
-
-    /**
-     * lazy load determinant
-     */
-    public double getDeterminant() {
-        if (determinant == null)
-            determinant = computeDeterminant(this.matrix);
-        return determinant;
+        computeAdjugateMatrix();
+        computeDeterminantFromAdjugateMatrix();
     }
 
     private double computeDeterminant(ArrayList<ArrayList<Double>> matrix){
@@ -57,5 +38,33 @@ public class AdvancedMatrix {
             determinant = matrix.get(0).get(0) * matrix.get(1).get(1) - matrix.get(0).get(1) * matrix.get(1).get(0);
         }
         return determinant;
+    }
+
+    private void computeDeterminantFromAdjugateMatrix(){
+        determinant = 0D;
+        for (int i = 0; i < matrix.size(); i++)
+            determinant += adjugateMatrix.get(0).get(i) * matrix.get(0).get(i);
+    }
+
+    private void computeAdjugateMatrix(){
+        adjugateMatrix = new ArrayList<>();
+        for (int i = 0; i < matrix.size(); i++){
+            adjugateMatrix.add(new ArrayList<>());
+            for (int j = 0; j < matrix.size(); j++) {
+                if (matrix.get(i).get(j) == 0D) {
+                    adjugateMatrix.get(i).add(0D);
+                    continue;
+                }
+                ArrayList<ArrayList<Double>> minor = new ArrayList<>();
+                for (int m = 0; m < matrix.size(); m++)
+                    if (m != i){
+                        minor.add(new ArrayList<>());
+                        for (int n = 0; n < matrix.size(); n++)
+                            if (n != j)
+                                minor.get(m > i ? m - 1 : m).add(matrix.get(m).get(n > j ? n - 1 : n));
+                    }
+                adjugateMatrix.get(i).add(computeDeterminant(minor) * ((i + j) % 2 == 1 ? -1 : 1));
+            }
+        }
     }
 }
