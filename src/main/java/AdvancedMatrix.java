@@ -6,7 +6,7 @@ public class AdvancedMatrix {
     private ArrayList<ArrayList<Double>> adjugateMatrix = null;
     private final ArrayList<Double> freeTerms;
     private ArrayList<Double> variables;
-    private Double determinant = null;
+    private Double determinant;
 
     public AdvancedMatrix(ArrayList<ArrayList<Double>> matrix, ArrayList<Double> freeTerms) throws InvalidParameterException{
         if (matrix.size() < 2)
@@ -17,6 +17,7 @@ public class AdvancedMatrix {
         this.freeTerms = freeTerms;
         computeAdjugateMatrix();
         computeDeterminantFromAdjugateMatrix();
+        computeVariables();
     }
 
     private double computeDeterminant(ArrayList<ArrayList<Double>> matrix){
@@ -65,6 +66,20 @@ public class AdvancedMatrix {
                     }
                 adjugateMatrix.get(i).add(computeDeterminant(minor) * ((i + j) % 2 == 1 ? -1 : 1));
             }
+        }
+    }
+
+    private void computeVariables(){
+        if (determinant == 0D) {
+            variables = null;
+            return;
+        }
+        variables = new ArrayList<>();
+        for (int i = 0; i < freeTerms.size(); i++){
+            double var = 0;
+            for (int j = 0; j < freeTerms.size(); j++)
+                var += freeTerms.get(j) * adjugateMatrix.get(j).get(i) / determinant;
+            variables.add(var);
         }
     }
 }
