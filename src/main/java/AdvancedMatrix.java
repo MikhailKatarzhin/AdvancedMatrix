@@ -42,13 +42,13 @@ public class AdvancedMatrix {
         double determinant = 0;
         if (matrix.size() > 2){
             for (int i = 0; i < matrix.size(); i++){
-                if (matrix.get(0).get(i) == 0) continue;
+                if (matrix.get(0).get(i) == 0D) continue;
                 ArrayList<ArrayList<Double>> minor = new ArrayList<>();
-                for (int m = 0; m < matrix.size() - 1; m++){
+                for (int m = 1; m < matrix.size(); m++){
                     minor.add(new ArrayList<>());
                     for (int n = 0; n < matrix.size(); n++){
                         if (n == i) continue;
-                        minor.get(m).add(matrix.get(m+1).get(n));
+                        minor.get(m-1).add(matrix.get(m).get(n));
                     }
                 }
                 determinant += computeDeterminant(minor) * matrix.get(0).get(i) * i%2 == 1 ? -1 : 1;
