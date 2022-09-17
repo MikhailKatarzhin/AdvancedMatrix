@@ -9,15 +9,19 @@ public class AdvancedMatrix {
     private Double determinant;
 
     public AdvancedMatrix(ArrayList<ArrayList<Double>> matrix, ArrayList<Double> freeTerms) throws InvalidParameterException{
-        if (matrix.size() < 2)
-            throw new InvalidParameterException("Matrix size mast be at least 2");
+        if (matrix.size() < 1)
+            throw new InvalidParameterException("Matrix size mast be at least 1");
         if (matrix.size() != freeTerms.size())
             throw new InvalidParameterException("Matrix size don't equals freeTerms size");
         this.matrix = matrix;
         this.freeTerms = freeTerms;
+        long millis = System.nanoTime();
         computeAdjugateMatrix();
+        System.out.println("Timer of compute adjugate matrix: " + 1.0*(System.nanoTime() - millis)/1000000);
         computeDeterminantFromAdjugateMatrix();
+        System.out.println("Timer of compute determinant using adjugate matrix: " + 1.0*(System.nanoTime() - millis)/1000000);
         computeVariables();
+        System.out.println("Timer of compute slae: " + 1.0*(System.nanoTime() - millis)/1000000);
     }
 
     private double computeDeterminant(ArrayList<ArrayList<Double>> matrix){
@@ -33,15 +37,24 @@ public class AdvancedMatrix {
                         minor.get(m-1).add(matrix.get(m).get(n));
                     }
                 }
-                determinant += computeDeterminant(minor) * matrix.get(0).get(i) * i%2 == 1 ? -1 : 1;
+                double tmp = computeDeterminant(minor);
+                tmp *= matrix.get(0).get(i);
+                tmp *= (i%2 == 1 ? -1 : 1);
+                determinant += tmp;
             }
-        }else{
+        }else if (matrix.size() == 2){
             determinant = matrix.get(0).get(0) * matrix.get(1).get(1) - matrix.get(0).get(1) * matrix.get(1).get(0);
+        }else {
+            determinant = matrix.get(0).get(0);
         }
         return determinant;
     }
 
     private void computeDeterminantFromAdjugateMatrix(){
+        if (matrix.size() == 1){
+            determinant = matrix.get(0).get(0);
+            return;
+        }
         determinant = 0D;
         for (int i = 0; i < matrix.size(); i++)
             determinant += adjugateMatrix.get(0).get(i) * matrix.get(0).get(i);
@@ -49,20 +62,21 @@ public class AdvancedMatrix {
 
     private void computeAdjugateMatrix(){
         adjugateMatrix = new ArrayList<>();
+        if (matrix.size() == 1){
+            adjugateMatrix.add(new ArrayList<>());
+            adjugateMatrix.get(0).add(1D);
+            return;
+        }
         for (int i = 0; i < matrix.size(); i++){
             adjugateMatrix.add(new ArrayList<>());
             for (int j = 0; j < matrix.size(); j++) {
-                if (matrix.get(i).get(j) == 0D) {
-                    adjugateMatrix.get(i).add(0D);
-                    continue;
-                }
                 ArrayList<ArrayList<Double>> minor = new ArrayList<>();
                 for (int m = 0; m < matrix.size(); m++)
                     if (m != i){
                         minor.add(new ArrayList<>());
                         for (int n = 0; n < matrix.size(); n++)
                             if (n != j)
-                                minor.get(m > i ? m - 1 : m).add(matrix.get(m).get(n > j ? n - 1 : n));
+                                minor.get(m > i ? m - 1 : m).add(matrix.get(m).get(n));
                     }
                 adjugateMatrix.get(i).add(computeDeterminant(minor) * ((i + j) % 2 == 1 ? -1 : 1));
             }
@@ -81,5 +95,29 @@ public class AdvancedMatrix {
                 var += freeTerms.get(j) * adjugateMatrix.get(j).get(i) / determinant;
             variables.add(var);
         }
+    }
+
+    /**
+     * @return null if determinant is 0
+     */
+    public ArrayList<Double> getVariables() {
+        if (determinant == 0D)
+            return null;
+        ArrayList<Double> clone = new ArrayList<>();
+        for (double var : variables)
+            clone.add(var);
+        return clone;
+    }
+
+    public void printAdvancedMatrix(){
+        for (int i = 0; i < matrix.size(); i++) {
+            for (int j = 0; j < matrix.size(); j++)
+                System.out.printf("A[%d][%d] %s%.5f\t", i, j, matrix.get(i).get(j) >= 0 ? "+" : "", matrix.get(i).get(j));
+            System.out.println(" = B[" + i + "] " + freeTerms.get(i));
+        }
+    }
+
+    public Double getDeterminant() {
+        return new Double(determinant);
     }
 }
