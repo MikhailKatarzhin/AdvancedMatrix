@@ -8,7 +8,7 @@ public class AdvancedMatrix {
     private ArrayList<Double> variables;
     private Double determinant;
 
-    public AdvancedMatrix(ArrayList<ArrayList<Double>> matrix, ArrayList<Double> freeTerms) throws InvalidParameterException{
+    public AdvancedMatrix(ArrayList<ArrayList<Double>> matrix, ArrayList<Double> freeTerms) throws InvalidParameterException {
         if (matrix.size() < 1)
             throw new InvalidParameterException("Matrix size mast be at least 1");
         if (matrix.size() != freeTerms.size())
@@ -16,7 +16,8 @@ public class AdvancedMatrix {
         this.matrix = matrix;
         this.freeTerms = freeTerms;
         long millis = System.nanoTime();
-        computeAdjugateMatrix();
+        //computeAdjugateMatrix();
+        computeAdjugateMatrixMultiThreading();
         System.out.println("Timer of compute adjugate matrix: " + 1.0*(System.nanoTime() - millis)/1000000);
         computeDeterminantFromAdjugateMatrix();
         System.out.println("Timer of compute determinant using adjugate matrix: " + 1.0*(System.nanoTime() - millis)/1000000);
@@ -83,6 +84,32 @@ public class AdvancedMatrix {
         }
     }
 
+    /**
+     * Faster than 1 thread when at least 8*8 matrix
+     */
+    private void computeAdjugateMatrixMultiThreading(){
+        adjugateMatrix = new ArrayList<>();
+        if (matrix.size() == 1){
+            adjugateMatrix.add(new ArrayList<>());
+            adjugateMatrix.get(0).add(1D);
+            return;
+        }
+        int cores = Runtime.getRuntime().availableProcessors();
+        for (int i = 0; i < freeTerms.size(); i++)
+            adjugateMatrix.add(new ArrayList<>());
+        try {
+            ArrayList<Thread> threads = new ArrayList<>();
+            for (int i = 0; i < cores; i++) {
+                threads.add(new Thread(new runnableMinorDet(i, cores)));
+                threads.get(i).start();
+            }
+            for (Thread thread : threads)
+                thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void computeVariables(){
         if (determinant == 0D) {
             variables = null;
@@ -116,5 +143,31 @@ public class AdvancedMatrix {
 
     public Double getDeterminant() {
         return determinant;
+    }
+
+    private class runnableMinorDet implements Runnable{
+        int offset;
+        int cores;
+
+        public runnableMinorDet(int offset, int cores) {
+            this.offset = offset;
+            this.cores = cores;
+        }
+
+        @Override
+        public void run() {
+            for (int i = offset; i < matrix.size(); i += cores)
+                for (int j = 0; j < matrix.size(); j++) {
+                    ArrayList<ArrayList<Double>> minor = new ArrayList<>();
+                    for (int m = 0; m < matrix.size(); m++)
+                        if (m != i){
+                            minor.add(new ArrayList<>());
+                            for (int n = 0; n < matrix.size(); n++)
+                                if (n != j)
+                                    minor.get(m > i ? m - 1 : m).add(matrix.get(m).get(n));
+                        }
+                    adjugateMatrix.get(i).add(computeDeterminant(minor) * ((i + j) % 2 == 1 ? -1 : 1));
+                }
+        }
     }
 }
