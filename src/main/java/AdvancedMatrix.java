@@ -103,10 +103,7 @@ public class AdvancedMatrix {
     public ArrayList<Double> getVariables() {
         if (determinant == 0D)
             return null;
-        ArrayList<Double> clone = new ArrayList<>();
-        for (double var : variables)
-            clone.add(var);
-        return clone;
+        return new ArrayList<>(variables);
     }
 
     public void printAdvancedMatrix(){
@@ -118,6 +115,6 @@ public class AdvancedMatrix {
     }
 
     public Double getDeterminant() {
-        return new Double(determinant);
+        return determinant;
     }
 }
